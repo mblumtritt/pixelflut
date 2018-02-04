@@ -53,4 +53,4 @@ With these options you can configure the server:
 -w, --width WIDTH        set canvas width (default: 800)
 -h, --height HEIGHT      set canvas height (default: 600)
 -f, --[no-]fullscreen    run in fullscreen mode
-´´´
+```
