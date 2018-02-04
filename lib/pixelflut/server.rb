@@ -8,10 +8,11 @@ module Pixelflut
       :host,
       :port,
       :keep_alive_time,
-      :read_buffer_size
+      :read_buffer_size,
+      :max_commands_at_once
     ) do
       def self.default
-        new(nil, 1234, 1, 1024)
+        new(nil, 1234, 1, 1024, 10)
       end
     end
 
@@ -23,6 +24,7 @@ module Pixelflut
       @ccfg = Connection::Configuration.new(
         keep_alive_time: config.keep_alive_time,
         read_buffer_size: config.read_buffer_size,
+        max_commands_at_once: config.max_commands_at_once,
         canvas: canvas,
         size_result: "SIZE #{canvas.width} #{canvas.height}\n".freeze,
         on_end: ->(conn){ @connections.delete(conn) }
@@ -62,6 +64,7 @@ module Pixelflut
       Configuration = Struct.new(
         :keep_alive_time,
         :read_buffer_size,
+        :max_commands_at_once,
         :canvas,
         :size_result,
         :on_end,
@@ -79,11 +82,12 @@ module Pixelflut
         return unless socket
         socket.close
         @config.on_end.call(self)
+        false
       end
 
       def update
         index = @buffer.index("\n")
-        return process_buffer(index) if index
+        return process_loop(index) if index
         read_size = @config.read_buffer_size - @buffer.size
         return close(:buffer_exceeded) if read_size <= 0
         str = @socket.recv_nonblock(read_size, exception: false)
@@ -99,6 +103,7 @@ module Pixelflut
       def next_command(index)
         @buffer = @buffer[index, @buffer.size - index]
         @last_tm = Time.now.to_f
+        true
       end
 
       def command_size(index)
@@ -120,14 +125,23 @@ module Pixelflut
         next_command(index)
       end
 
+      def process_loop(index)
+        command_count = @config.max_commands_at_once
+        while process_buffer(index)
+          index = @buffer.index("\n") or return
+          command_count -= 1
+          break if command_count <= 0
+        end
+      end
+
       def process_buffer(index)
         return close(:max_command_size_exceeded) if index > 31 # 'RC 9999 9999 9999 9999 RRGGBBAA'.size
         command = @buffer[0, index]
         index += 1
-        return command_size(index) if command == 'SIZE'
-        return close(:quit) if command == 'QUIT'
         return command_px(command, index) if command.start_with?('PX ')
         return command_rc(command, index) if command.start_with?('RC ')
+        return close(:quit) if command == 'QUIT'
+        return command_size(index) if command == 'SIZE'
         close(:bad_command)
       end
     end
