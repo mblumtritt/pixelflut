@@ -35,10 +35,9 @@ module Pixelflut
 
     def update
       return create_socket unless @socket
-      now = Time.now.to_f
       incoming = @socket.accept_nonblock(exception: false)
-      create_connection(incoming, now) unless Symbol === incoming
-      @connections.keys.each{ |con| con.update(now) }
+      create_connection(incoming) unless Symbol === incoming
+      @connections.keys.each(&:update)
     end
 
     def run
@@ -49,8 +48,8 @@ module Pixelflut
 
     private
 
-    def create_connection(incoming, now)
-      con = Connection.new(incoming, now, @ccfg)
+    def create_connection(incoming)
+      con = Connection.new(incoming, @ccfg)
       @connections[con] = con
     end
 
@@ -69,10 +68,10 @@ module Pixelflut
         keyword_init: true
       )
 
-      def initialize(socket, now, config)
-        @socket, @last_tm, @config = socket, now, config
-        # @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-        @buffer = ''
+      def initialize(socket, config)
+        @socket, @config = socket, config
+        # socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+        @last_tm, @buffer = Time.now.to_f, ''
       end
 
       def close(_reason)
@@ -82,12 +81,13 @@ module Pixelflut
         @config.on_end.call(self)
       end
 
-      def update(now)
+      def update
         index = @buffer.index("\n")
-        return process_buffer(index, now) if index
+        return process_buffer(index) if index
         read_size = @config.read_buffer_size - @buffer.size
         return close(:buffer_exceeded) if read_size <= 0
         str = @socket.recv_nonblock(read_size, exception: false)
+        now = Time.now.to_f
         return (now - @last_tm > @config.keep_alive_time ? close(:timeout) : nil) if Symbol === str
         return close(:closed_by_peer) if 0 == str.size
         @buffer += str
@@ -96,38 +96,38 @@ module Pixelflut
 
       private
 
-      def next_command(index, now)
+      def next_command(index)
         @buffer = @buffer[index, @buffer.size - index]
-        @last_tm = now
+        @last_tm = Time.now.to_f
       end
 
-      def command_size(index, now)
+      def command_size(index)
         @socket.sendmsg_nonblock(@config.size_result)
-        next_command(index, now)
+        next_command(index)
       end
 
-      def command_px(command, index, now)
+      def command_px(command, index)
         _, x, y, color = command.split(' ', 4)
         return close(:color_expected) unless color
         @config.canvas[x.to_i, y.to_i] = color
-        next_command(index, now)
+        next_command(index)
       end
 
-      def command_rc(command, index, now)
+      def command_rc(command, index)
         _, x1, y1, x2, y2, color = command.split(' ', 6)
         return close(:color_expected) unless color
         @config.canvas.draw_rect(x1.to_i, y1.to_i, x2.to_i, y2.to_i, color)
-        next_command(index, now)
+        next_command(index)
       end
 
-      def process_buffer(index, now)
+      def process_buffer(index)
         return close(:max_command_size_exceeded) if index > 31 # 'RC 9999 9999 9999 9999 RRGGBBAA'.size
         command = @buffer[0, index]
         index += 1
-        return command_size(index, now) if command == 'SIZE'
+        return command_size(index) if command == 'SIZE'
         return close(:quit) if command == 'QUIT'
-        return command_px(command, index, now) if command.start_with?('PX ')
-        return command_rc(command, index, now) if command.start_with?('RC ')
+        return command_px(command, index) if command.start_with?('PX ')
+        return command_rc(command, index) if command.start_with?('RC ')
         close(:bad_command)
       end
     end
