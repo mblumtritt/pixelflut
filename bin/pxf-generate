@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+def help(short)
+  puts('usage: pxf generate FILE [FILE2, ...]', nil) unless short
+  puts('Execute given generator FILEs.')
+end
+
+def extract_options(args)
+  files, options = [], {}
+  while !args.empty?
+    arg = args.shift
+    next files << arg unless arg[0] == '-'
+    next options.merge!(Hash[arg[1..-1].chars.map!{ |c| [c.to_sym, true] }]) unless arg[1] == '-'
+    options[arg[2..-1].to_sym] = args.shift
+  end
+  args[0, 0] = files
+  options
+end
+
+case ARGV[0]
+when '--help'
+  help(false)
+when '--short-help'
+  help(true)
+else
+  $options = extract_options(ARGV)
+  require File.realdirpath('../../lib/pixelflut/canvas/streamed.rb', __FILE__)
+  begin
+    ARGV.each{ |file| Pixelflut::Canvas::Streamed.new.instance_eval(IO.read(file), file, 0) }
+    print "QUIT\n"
+  rescue Interrupt
+    exit
+  end
+end

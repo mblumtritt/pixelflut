@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+def bin_root
+  File.realdirpath('../', __FILE__).freeze
+end
+
+def find_commands
+  Hash[Dir.glob(File.join(bin_root, 'pxf-*')).map!{ |cmd| [File.basename(cmd)[4..-1], cmd] }]
+end
+
+def err(msg)
+  $stderr.puts("pxf: #{msg}")
+  exit 1
+end
+
+def general_help
+  puts('usage: pxf command [options]', nil, 'valid commands:')
+  map = find_commands.transform_values!{ |cmd| %x[#{cmd} --short-help] }
+  cmds = map.keys.sort!
+  len = cmds.max_by(&:size).size + 3
+  cmds.each do |cmd|
+    print cmd.ljust(len)
+    puts(map[cmd])
+  end
+  exit
+end
+
+general_help if ARGV.empty? || ARGV[0] == '--help' || ARGV[0] == '-h'
+cmd = ARGV.shift
+fname = File.join(bin_root, 'pxf-' + cmd)
+err("no such command - #{cmd}") unless File.executable?(fname)
+exec(fname, *ARGV)

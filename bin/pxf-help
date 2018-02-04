@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+def help(short)
+  puts('usage: pxf help COMMAND', nil) unless short
+  puts('Print help for given COMMAND.')
+end
+
+def err(msg)
+  $stderr.puts("pxf: #{msg}")
+  exit 1
+end
+
+case ARGV[0]
+when '--help'
+  help(false)
+when '--short-help'
+  help(true)
+else
+  root = File.realdirpath('../', __FILE__).freeze
+  exec(File.join(root, 'pxf')) if ARGV.empty?
+  ARGV.each do |cmd|
+    fname = File.join(root, 'pxf-' + cmd)
+    err("no such command - #{cmd}") unless File.executable?(fname)
+    system(fname, '--help')
+  end
+end

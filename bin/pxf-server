@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+def options(cfg)
+  require 'optparse'
+  OptionParser.new do |opts|
+    opts.summary_indent = '  '
+    opts.banner = 'usage: pxf server [options]'
+    opts.separator(nil)
+    opts.separator('valid options:')
+    opts.on('-b', '--bind ADDR', String, 'bind to given address'){ |v| cfg.server.host = v }
+    opts.on('-p', '--port PORT', Integer, 'select port(default: 1234)'){ |v| cfg.server.port = v }
+    opts.on('-k', '--keep-alive', Float, 'set maximum keep-alive time'){ |v| cfg.server.keep_alive_time = v }
+    opts.on('-r', '--read_buffer SIZE', Integer, 'set read buffer size (default: 1024)'){ |v| cfg.server.read_buffer_size = v }
+    opts.on('-w', '--width WIDTH', Integer, 'set canvas width (default: 800)'){ |v| cfg.width = v }
+    opts.on('-h', '--height HEIGHT', Integer, 'set canvas height (default: 600)'){ |v| cfg.height = v }
+    opts.on('-f', '--[no-]fullscreen', 'run in fullscreen mode'){ |v| cfg.fullscreen = v }
+  end
+end
+
+def help(short)
+  puts(options(nil), nil) unless short
+  puts('Start Pixelflut server.')
+  exit
+end
+
+help(false) if ARGV[0] == '--help'
+help(true) if ARGV[0] == '--short-help'
+
+def create_configuration
+  cfg = Pixelflut::App::Configuration.default
+  options(cfg).parse!
+  cfg
+rescue OptionParser::ParseError => e
+  $stderr.puts("pxf: #{e}")
+  exit 1
+end
+
+begin
+  require 'optparse'
+  require File.realdirpath('../../lib/pixelflut.rb', __FILE__)
+  Pixelflut::App.run(create_configuration)
+rescue Interrupt
+  exit
+end

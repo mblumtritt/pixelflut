@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+def help(short)
+  puts('usage: pxf version', nil) unless short
+  puts('Print version information.')
+end
+
+case ARGV[0]
+when '--help'
+  help(false)
+when '--short-help'
+  help(true)
+else
+  require File.realdirpath('../../lib/pixelflut/version.rb', __FILE__).freeze
+  puts("pxf #{Pixelflut::VERSION}")
+end
