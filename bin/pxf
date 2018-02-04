@@ -16,7 +16,7 @@ end
 
 def general_help
   puts('usage: pxf command [options]', nil, 'valid commands:')
-  map = find_commands.transform_values!{ |cmd| %x[#{cmd} --short-help] }
+  map = find_commands.transform_values!{ |cmd| %x(#{cmd} --short-help) }
   cmds = map.keys.sort!
   len = cmds.max_by(&:size).size + 3
   cmds.each do |cmd|
