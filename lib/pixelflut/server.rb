@@ -20,8 +20,13 @@ module Pixelflut
     def initialize(canvas, config = Configuration.default)
       @canvas, @config = canvas, config
       @socket, @connections = nil, {}
-      @on_end = ->(conn){ @connections.delete(conn) }
-      @size = "SIZE #{canvas.width} #{canvas.height}\n".freeze
+      @ccfg = Connection::Configuration.new(
+        keep_alive_time: config.keep_alive_time,
+        read_buffer_size: config.read_buffer_size,
+        canvas: canvas,
+        size_result: "SIZE #{canvas.width} #{canvas.height}\n".freeze,
+        on_end: ->(conn){ @connections.delete(conn) }
+      ).freeze
     end
 
     def connection_count
@@ -45,7 +50,7 @@ module Pixelflut
     private
 
     def create_connection(incoming, now)
-      con = Connection.new(incoming, now, @config, @canvas, @size, @on_end)
+      con = Connection.new(incoming, now, @ccfg)
       @connections[con] = con
     end
 
@@ -55,8 +60,17 @@ module Pixelflut
     end
 
     class Connection
-      def initialize(socket, now, config, canvas, size, on_end)
-        @socket, @last_tm, @config, @canvas, @size, @on_end = socket, now, config, canvas, size, on_end
+      Configuration = Struct.new(
+        :keep_alive_time,
+        :read_buffer_size,
+        :canvas,
+        :size_result,
+        :on_end,
+        keyword_init: true
+      )
+
+      def initialize(socket, now, config)
+        @socket, @last_tm, @config = socket, now, config
         # @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         @buffer = ''
       end
@@ -65,7 +79,7 @@ module Pixelflut
         socket, @socket = @socket, nil
         return unless socket
         socket.close
-        @on_end.call(self)
+        @config.on_end.call(self)
       end
 
       def update(now)
@@ -88,21 +102,21 @@ module Pixelflut
       end
 
       def command_size(index, now)
-        @socket.sendmsg_nonblock(@size)
+        @socket.sendmsg_nonblock(@config.size_result)
         next_command(index, now)
       end
 
       def command_px(command, index, now)
         _, x, y, color = command.split(' ', 4)
         return close(:color_expected) unless color
-        @canvas[x.to_i, y.to_i] = color
+        @config.canvas[x.to_i, y.to_i] = color
         next_command(index, now)
       end
 
       def command_rc(command, index, now)
         _, x1, y1, x2, y2, color = command.split(' ', 6)
         return close(:color_expected) unless color
-        @canvas.draw_rect(x1.to_i, y1.to_i, x2.to_i, y2.to_i, color)
+        @config.canvas.draw_rect(x1.to_i, y1.to_i, x2.to_i, y2.to_i, color)
         next_command(index, now)
       end
 
