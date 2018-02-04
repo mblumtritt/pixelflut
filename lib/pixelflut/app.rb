@@ -26,6 +26,7 @@ module Pixelflut
       @image = TextImage.new(width, height)
       @server = Server.new(@image, configuration.server)
       log(self.caption = "Pixelflut@#{configuration.server.host}:#{configuration.server.port}")
+      log(configuration.server)
       reset!
     end
 
