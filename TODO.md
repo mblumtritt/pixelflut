@@ -2,6 +2,8 @@
 
 ## Todo
 
-- [ ] limit connections to _*one* per IP_
+- [x] limit connections _per IP_
 - [x] allow 10 (pixel-)actions per client
+- [ ] extend `pxf generate`
+- [ ] add a pre-processor for images
 - [ ] mention the Gosu gem in the README
