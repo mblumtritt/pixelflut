@@ -40,6 +40,7 @@ module Pixelflut
     end
 
     def update
+      # self.caption = @image.changes
       @draw_image = nil unless 0 == @image.changes
     end
 

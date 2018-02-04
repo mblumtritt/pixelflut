@@ -8,13 +8,30 @@ def options(cfg)
     opts.banner = 'usage: pxf server [options]'
     opts.separator(nil)
     opts.separator('valid options:')
-    opts.on('-b', '--bind ADDR', String, 'bind to given address'){ |v| cfg.server.host = v }
-    opts.on('-p', '--port PORT', Integer, 'select port(default: 1234)'){ |v| cfg.server.port = v }
-    opts.on('-k', '--keep-alive', Float, 'set maximum keep-alive time'){ |v| cfg.server.keep_alive_time = v }
-    opts.on('-r', '--read_buffer SIZE', Integer, 'set read buffer size (default: 1024)'){ |v| cfg.server.read_buffer_size = v }
-    opts.on('-w', '--width WIDTH', Integer, 'set canvas width (default: 800)'){ |v| cfg.width = v }
-    opts.on('-h', '--height HEIGHT', Integer, 'set canvas height (default: 600)'){ |v| cfg.height = v }
-    opts.on('-f', '--[no-]fullscreen', 'run in fullscreen mode'){ |v| cfg.fullscreen = v }
+    opts.on('-b', '--bind ADDR', String, 'bind to given address') do |v|
+      cfg.server.host = v
+    end
+    opts.on('-p', '--port PORT', Integer, 'select port(default: 1234)') do |v|
+      cfg.server.port = v
+    end
+    opts.on('-k', '--keep-alive', Float, 'set maximum keep-alive time') do |v|
+      cfg.server.keep_alive_time = v
+    end
+    opts.on('-r', '--read_buffer SIZE', Integer, 'set read buffer size (default: 1024)') do |v|
+      cfg.server.read_buffer_size = v
+    end
+    opts.on('-c', '--commands NUMBER', Integer, 'set number of continious processed commands (default: 10)') do |v|
+      cfg.server.max_commands_at_once = v
+    end
+    opts.on('-w', '--width WIDTH', Integer, 'set canvas width (default: 800)') do |v|
+      cfg.width = v
+    end
+    opts.on('-h', '--height HEIGHT', Integer, 'set canvas height (default: 600)') do |v|
+      cfg.height = v
+    end
+    opts.on('-f', '--[no-]fullscreen', 'run in fullscreen mode') do |v|
+      cfg.fullscreen = v
+    end
   end
 end
 
