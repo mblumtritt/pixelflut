@@ -24,7 +24,7 @@ module Pixelflut
     end
 
     # def [](x, y)
-    #   @data[(4 * (x + @columns * y)) % @data.size, 4].bytes.map! do |b|
+    #   @@to_blob[(4 * (x + @columns * y)) % @data.size, 4].bytes.map! do |b|
     #     b = b.to_s(16)
     #     b = '0' + b if b.size == 1
     #     b
@@ -40,10 +40,10 @@ module Pixelflut
       x1, x2 = x2, x1 if x1 > x2
       y1, y2 = y2, y1 if y1 > y2
       color = as_color(rrggbbaa)
-      pos = (4 * (x1 + @columns * y1)) % @data.size
+      pos = (4 * (x1 + @columns * y1)) % @to_blob.size
       pattern = color * (x2 - x1 + 1)
       (y2 - y1 + 1).times do
-        @data[pos, pattern.size] = pattern
+        @to_blob[pos, pattern.size] = pattern
         pos += @row_inc
       end
       @changes += 1
