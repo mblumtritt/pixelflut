@@ -20,7 +20,7 @@ def options(cfg)
     opts.on('-r', '--read_buffer SIZE', Integer, 'set read buffer size (default: 1024)') do |v|
       cfg.server.read_buffer_size = v
     end
-    opts.on('-l', '--peer-limit NUMBER', Integer, 'limit number connections per peer (default: 8)') do |v|
+    opts.on('-l', '--peer-limit NUMBER', Integer, 'limit number of connections per peer (default: 8)') do |v|
       cfg.server.peer_limit = v
     end
     opts.on('-c', '--command-limit NUMBER', Integer, 'limit of continious processed commands (default: 10)') do |v|
@@ -57,7 +57,6 @@ rescue OptionParser::ParseError => e
 end
 
 begin
-  require 'optparse'
   require File.realdirpath('../../lib/pixelflut.rb', __FILE__)
   Pixelflut::App.run(create_configuration)
 rescue Interrupt
