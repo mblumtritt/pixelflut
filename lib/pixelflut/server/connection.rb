@@ -39,6 +39,8 @@ module Pixelflut
         return close(:closed_by_peer) if 0 == str.size
         @buffer += str
         @last_tm = now
+      rescue Errno::ECONNRESET
+        close(:closed_by_peer)
       end
 
       private

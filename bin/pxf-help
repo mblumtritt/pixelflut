@@ -8,7 +8,7 @@ end
 
 def err(msg)
   $stderr.puts("pxf: #{msg}")
-  exit 1
+  exit(1)
 end
 
 case ARGV[0]

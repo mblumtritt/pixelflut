@@ -53,7 +53,7 @@ def create_configuration
   cfg
 rescue OptionParser::ParseError => e
   $stderr.puts("pxf: #{e}")
-  exit 1
+  exit(1)
 end
 
 begin
