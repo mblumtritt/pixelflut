@@ -29,6 +29,7 @@ $ pxf
 usage: pxf command [options]
 
 valid commands:
+convert    Convert given IMAGE file to Pixelflut format.
 generate   Execute given generator FILEs.
 help       Print help for given COMMAND.
 server     Start Pixelflut server.
@@ -53,4 +54,34 @@ With these options you can configure the server:
 -w, --width WIDTH        set canvas width (default: 800)
 -h, --height HEIGHT      set canvas height (default: 600)
 -f, --[no-]fullscreen    run in fullscreen mode
+```
+
+### Convert an image
+
+There is a conversion command which can be used to convert a given image to the Pixelflut text format:
+
+```bash
+$ pxf convert image.png
+```
+
+The result can directly send to a running server (sample assumes the server runs on localhost port 1234):
+
+```bash
+$ pxf convert image.png | netcat localhost 1234
+```
+
+The converter can help you to resize and positioning the image and the servers canvas. These options are avail:
+
+```
+-x, --transpose-x X   transpose image X pixels
+-y, --transpose-y Y   transpose image Y pixels
+-w, --width WIDTH     resize the image to given WIDTH
+-h, --height HEIGHT   resize the image to given HEIGHT
+```
+
+It maybe faster to pre-process your image(s) and send later:
+
+```bash
+$ pxf convert -x 50 -y 100 --width 640 image.png > image.px
+$ cat image.px | netcat localhost 1234
 ```
