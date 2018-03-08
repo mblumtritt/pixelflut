@@ -10,13 +10,11 @@ module Pixelflut
       end
 
       def each(&block)
-        return to_enum(__method__) unless block
-        @lines.each(&block)
-        yield "QUIT\n"
+        block ? @lines.each(&block) : to_enum(__method__)
       end
 
       def to_s
-        @lines.join + "QUIT\n"
+        @lines.join
       end
 
       private

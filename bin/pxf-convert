@@ -8,8 +8,8 @@ def options(cfg)
     opts.banner = 'usage: pxf convert [options] IMAGE'
     opts.separator(nil)
     opts.separator('valid options:')
-    opts.on('-x', '--transpose-x X', Integer, 'transpose image X pixels'){ |v| cfg[:x_offset] = v }
-    opts.on('-y', '--transpose-y Y', Integer, 'transpose image Y pixels'){ |v| cfg[:y_offset] = v }
+    opts.on('-x', '--transpose-x X', Integer, 'transpose image X pixels'){ |v| cfg[:offset_x] = v }
+    opts.on('-y', '--transpose-y Y', Integer, 'transpose image Y pixels'){ |v| cfg[:offset_y] = v }
     opts.on('-w', '--width WIDTH', Integer, 'resize the image to given WIDTH'){ |v| cfg[:width] = v }
     opts.on('-h', '--height HEIGHT', Integer, 'resize the image to given HEIGHT'){ |v| cfg[:height] = v }
   end
@@ -40,13 +40,15 @@ err('too few arguments') if ARGV.empty?
 options = create_options
 require File.realdirpath('../../lib/pixelflut/converter.rb', __FILE__)
 err('unable to load library - RMagick') unless Pixelflut::Converter::Avail
+require File.realdirpath('../../lib/pixelflut/canvas/streamed.rb', __FILE__)
 begin
+  canvas = Pixelflut::Canvas::Streamed.new($stdout)
+  canvas.offset_x = options[:offset_x] if options[:offset_x]
+  canvas.offset_y = options[:offset_y] if options[:offset_y]
   ARGV.each do |file_name|
     cvt = Pixelflut::Converter.new(file_name)
-    cvt.x_offset = options[:x_offset] if options[:x_offset]
-    cvt.y_offset = options[:y_offset] if options[:y_offset]
     cvt.resize_to(options[:width], options[:height]) if options[:width]
-    cvt.each_line{ |line| puts(line) }
+    cvt.draw(canvas)
   end
 rescue Pixelflut::Converter::Error => e
   err(e.message, 2)
