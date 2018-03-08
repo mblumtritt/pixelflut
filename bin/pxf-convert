@@ -39,6 +39,7 @@ help(true) if '--short-help' == ARGV[0]
 err('too few arguments') if ARGV.empty?
 options = create_options
 require File.realdirpath('../../lib/pixelflut/converter.rb', __FILE__)
+err('unable to load library - RMagick') unless Pixelflut::Converter::Avail
 begin
   ARGV.each do |file_name|
     cvt = Pixelflut::Converter.new(file_name)
