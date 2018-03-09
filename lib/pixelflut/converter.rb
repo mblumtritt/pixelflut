@@ -9,7 +9,7 @@ module Pixelflut
     require 'rmagick'
 
     class Converter
-      Avail = true
+      AVAIL = true
 
       def initialize(file_name)
         @images = load_images(file_name)
@@ -41,6 +41,6 @@ module Pixelflut
       end
     end
   rescue LoadError
-    Converter::Avail = false
+    Converter::AVAIL = false
   end
 end

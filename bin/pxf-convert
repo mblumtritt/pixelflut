@@ -39,7 +39,7 @@ help(true) if '--short-help' == ARGV[0]
 err('too few arguments') if ARGV.empty?
 options = create_options
 require File.realdirpath('../../lib/pixelflut/converter.rb', __FILE__)
-err('unable to load library - RMagick') unless Pixelflut::Converter::Avail
+err('unable to load library - RMagick') unless Pixelflut::Converter::AVAIL
 require File.realdirpath('../../lib/pixelflut/canvas/streamed.rb', __FILE__)
 begin
   canvas = Pixelflut::Canvas::Streamed.new($stdout)
