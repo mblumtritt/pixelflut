@@ -27,17 +27,15 @@ def err(msg, code = 1)
 end
 
 def create_options
-  cfg = {}
-  options(cfg).parse!
-  cfg
+  {}.tap{ |cfg| options(cfg).parse! }
 rescue OptionParser::ParseError => e
   err(e)
 end
 
 help(false) if '--help' == ARGV[0]
 help(true) if '--short-help' == ARGV[0]
-err('too few arguments') if ARGV.empty?
 options = create_options
+err('too few arguments') if ARGV.empty?
 require File.realdirpath('../../lib/pixelflut/converter.rb', __FILE__)
 err('unable to load library - RMagick') unless Pixelflut::Converter::AVAIL
 require File.realdirpath('../../lib/pixelflut/canvas/streamed.rb', __FILE__)
