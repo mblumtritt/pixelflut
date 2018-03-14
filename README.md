@@ -1,6 +1,6 @@
 # Pixelflut
 
-A Pixelflut server written in Ruby.
+A Pixelflut server & client tool collection written in Ruby.
 
 ## Description
 

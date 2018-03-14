@@ -5,7 +5,7 @@ require File.expand_path('../lib/pixelflut/version', __FILE__)
 GemSpec = Gem::Specification.new do |spec|
   spec.name = 'pixelflut'
   spec.version = Pixelflut::VERSION
-  spec.summary = 'A Pixelflut server written in Ruby.'
+  spec.summary = 'A Pixelflut server & client tool collection written in Ruby.'
   spec.description = <<~EOS
     Based on the idea of a simple server protocol to collaborate on a shared canvas named
     [Pixel Flut](https://cccgoe.de/wiki/Pixelflut) this gem implements a Ruby version.
