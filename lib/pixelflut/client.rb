@@ -29,7 +29,7 @@ module Pixelflut
     end
 
     def create_sockets(address, slices)
-      slices.map{ |data| Socket.new(address, data) }
+      slices.map{ |data| NonblockSocket.new(address, data) }
     end
   end
 end
