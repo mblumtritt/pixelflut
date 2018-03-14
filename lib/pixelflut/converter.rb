@@ -22,14 +22,21 @@ module Pixelflut
       def each_pixel
         return to_enum(__method__) unless block_given?
         @images.each do |image|
-          image.each_pixel do |color, x, y|
-            yield(x, y, color.to_color(Magick::AllCompliance, true, 8, true)[1, 8]) unless 0xffff == color.opacity
-          end
+          image.each_pixel{ |color, x, y| yield(x, y, color) }
         end
       end
 
+      def each_rgba_pixel
+        return to_enum(__method__) unless block_given?
+        each_pixel{ |x, y, color| yield(x, y, as_rgba(color)) unless 0xffff == color.opacity }
+      end
+
       def draw(canvas)
-        each_pixel{ |x, y, rgba| canvas[x, y] = rgba }
+        each_rgba_pixel{ |x, y, rgba| canvas[x, y] = rgba }
+      end
+
+      def as_rgba(color)
+        color.to_color(Magick::AllCompliance, true, 8, true)[1, 8]
       end
 
       private
