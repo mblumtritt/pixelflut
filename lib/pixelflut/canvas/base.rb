@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'color'
-
 module Pixelflut
   module Canvas
     class Base
@@ -13,7 +11,7 @@ module Pixelflut
 
       def clear!
         @offset_x = @offset_y = 0
-        @color = Color::Black
+        @color = 'ffffffff'
       end
 
       def translate(x, y)

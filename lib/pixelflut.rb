@@ -1,8 +1,8 @@
 module Pixelflut
-  LibDir = File.realdirpath('../pixelflut', __FILE__).freeze
-  autoload :App, File.join(LibDir, 'app.rb')
-  autoload :Server, File.join(LibDir, 'server.rb')
-  autoload :Canvas, File.join(LibDir, 'canvas.rb')
-  autoload :Converter, File.join(LibDir, 'converter.rb')
-  autoload :VERSION, File.join(LibDir, 'version.rb')
+  LIB_DIR = File.realdirpath('../pixelflut', __FILE__).freeze
+  autoload :App, File.join(LIB_DIR, 'app.rb')
+  autoload :Server, File.join(LIB_DIR, 'server.rb')
+  autoload :Canvas, File.join(LIB_DIR, 'canvas.rb')
+  autoload :Converter, File.join(LIB_DIR, 'converter.rb')
+  autoload :VERSION, File.join(LIB_DIR, 'version.rb')
 end

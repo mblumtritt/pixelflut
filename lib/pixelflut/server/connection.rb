@@ -38,7 +38,7 @@ module Pixelflut
         str = @socket.recv_nonblock(read_size, exception: false)
         now = Time.now.to_f
         return (now - @last_tm > @config.keep_alive_time ? close(:timeout) : nil) if Symbol === str
-        return close(:closed_by_peer) if 0 == str.size
+        return close(:closed_by_peer) if str.size.zero?
         @buffer += str
         @last_tm = now
       rescue Errno::ECONNRESET

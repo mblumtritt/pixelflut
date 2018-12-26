@@ -11,10 +11,6 @@ module Pixelflut
         configure
       end
 
-      def connect?
-        :wait_writable != connect_nonblock(@addr, exception: false)
-      end
-
       def write_with_timout(data, timeout)
         return true if write_nonblock(data, exception: false) == data.bytesize
         return false unless wait_writable(timeout)
@@ -35,6 +31,10 @@ module Pixelflut
           next ret += got unless idx
           return ret + got[0, idx]
         end
+      end
+
+      def connect?
+        :wait_writable != connect_nonblock(@addr, exception: false)
       end
 
       private
@@ -74,16 +74,16 @@ module Pixelflut
       private
 
       def do_connect
-        @state = connect? ? :wait_connect : :write
+        @state = connect? ? :write : :wait_connect
       end
 
       def do_wait_for_connect
-        @state = :write unless wait_writable(0.1).nil?
+        @state = :not_connected unless wait_writable(0.1).nil?
       end
 
       def do_write
         written = write_nonblock(@data, exception: false)
-        return if Symbol === written
+        return written if Symbol === written
         @size -= written
         return @state = :write_finished if @size <= 0
         @data = @data.byteslice(written, @data.bytesize - written)

@@ -42,7 +42,7 @@ module Pixelflut
 
     def update
       # self.caption = @image.changes
-      @draw_image = nil unless 0 == @image.changes
+      @draw_image = nil unless @image.changes.zero?
     end
 
     def draw
@@ -65,7 +65,7 @@ module Pixelflut
     end
 
     def needs_redraw?
-      nil == @draw_image
+      @draw_image.nil?
     end
 
     def needs_cursor?
