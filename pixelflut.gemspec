@@ -11,7 +11,7 @@ GemSpec = Gem::Specification.new do |spec|
     [Pixel Flut](https://cccgoe.de/wiki/Pixelflut) this gem implements a Ruby version.
   DESCRIPTION
   spec.author = 'Mike Blumtritt'
-  spec.email = 'mike.blumtritt@invision.de'
+  spec.email = 'mike.blumtritt@pm.me'
   spec.homepage = 'https://github.com/mblumtritt/pixelflut'
   spec.metadata = {
     'issue_tracker' => 'https://github.com/mblumtritt/pixelflut/issues'
