@@ -71,7 +71,7 @@ begin
     sender = Pixelflut::Sender.new(addr, slices[i].join)
     slices.clear
     puts "#{$name}: run"
-    loop{ sender.update }
+    sender.run
   end
 rescue SocketError => e
   err(e, 3)

@@ -6,60 +6,41 @@ module Pixelflut
       Addrinfo.tcp(host, port)
     end
 
-    attr_reader :state
-
     def initialize(address, data)
       @data = data.freeze
       @addr = Socket.pack_sockaddr_in(address.ip_port, address.ip_address)
       @socket = configure(Socket.new(address.ipv6? ? :INET6 : :INET, :STREAM))
-      @state = :not_connected
     end
 
-    def inspect
-      "<#{self.class}:#{__id__} state:#{@state}>"
-    end
-
-    def call
-      case @state
-      when :not_connected
-        @state = :wait_connect if connect
-      when :wait_connect
-        @state = :write_prepare if connected
-      when :write_prepare
-        @state = :write if prepared
-      when :write
-        @state = :write_prepare unless written
-      else
-        close
-        @state = :closed
-      end
-      @state
-    end
-    alias update call
-
-    protected
-
-    def connect
-      :wait_writable == @socket.connect_nonblock(@addr, exception: false)
-    end
-
-    def connected
-      nil != @socket.wait_writable(1.0)
-    end
-
-    def prepared
-      @curr = String.new(@data)
-      @size = @curr.bytesize
-    end
-
-    def written
-      ret = @socket.write_nonblock(@curr, exception: false)
-      return false if Symbol === ret
-      return true if (@size -= ret) <= 0
-      @curr = @curr.byteslice(ret, @curr.bytesize - ret)
+    def run
+      connect
+      send(@socket, @data)
+      @socket.close
     end
 
     private
+
+    def send(socket, data)
+      curr = String.new(data)
+      loop do
+        written = socket.write(curr)
+        curr =
+          if (size = curr.bytesize - written) > 0
+            curr.byteslice(written, size)
+          else
+            String.new(data)
+          end
+      end
+    end
+
+    def connect
+      loop do
+        (
+          :wait_writable == @socket.connect_nonblock(@addr, exception: false)
+        ) and break
+      end
+      loop{ @socket.wait_writable(10) and break }
+    end
 
     def configure(socket)
       socket.sync = true
