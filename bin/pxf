@@ -5,9 +5,10 @@ require 'optparse'
 require_relative '../lib/pixelflut'
 
 $stderr.sync = $stdout.sync = true
+$name = 'pxf'
 
 def err(msg, code = 1)
-  $stderr.puts("pxf: #{msg}")
+  $stderr.puts("#{$name}: #{msg}")
   exit(code)
 end
 
@@ -66,11 +67,11 @@ begin
   )
   slices.size.times do |i|
     next unless fork
-    puts 'pxf: read'
+    Process.setproctitle($name = format('pxf-%02d', i + 1))
+    puts "#{$name}: read"
     sender = Pixelflut::Sender.new(addr, slices[i].join)
-    puts 'pxf: loop'
+    puts "#{$name}: loop"
     loop{ sender.call }
-    break
   end
 rescue Errno::EPIPE
   err('connection lost', 2)
