@@ -1,33 +1,80 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-def bin_root
-  File.realdirpath('../', __FILE__).freeze
-end
+require 'optparse'
+require_relative '../lib/pixelflut'
 
-def find_commands
-  Hash[Dir.glob(File.join(bin_root, 'pxf-*')).map!{ |cmd| [File.basename(cmd)[4..-1], cmd] }]
-end
+$stderr.sync = $stdout.sync = true
 
-def err(msg)
+def err(msg, code = 1)
   $stderr.puts("pxf: #{msg}")
-  exit 1
+  exit(code)
 end
 
-def general_help
-  puts('usage: pxf command [options]', nil, 'valid commands:')
-  map = find_commands.transform_values!{ |cmd| %x(#{cmd} --short-help) }
-  cmds = map.keys.sort!
-  len = cmds.max_by(&:size).size + 3
-  cmds.each do |cmd|
-    print cmd.ljust(len)
-    puts(map[cmd])
+OPTS = Struct
+  .new(:host, :port, :count, :x, :y, :scale, :image)
+  .new('127.0.0.1', 1234, 4, 0, 0)
+
+def parse(args)
+  OptionParser.new do |parser|
+    parser.summary_indent = '  '
+    parser.banner = 'Usage: pxf [options] IMAGE'
+    parser.separator(nil)
+    parser.separator('Options:')
+    parser.on(
+      '--host ADDRESS', 'target host address'
+    ){ |v| OPTS.host = v }
+    parser.on(
+      '-p', '--port NUMBER', Integer, 'target port (default 1234)'
+    ){ |v| OPTS.port = v }
+    parser.on(
+      '-c', '--connections COUNT', Integer, 'count of connections (default 4)'
+    ){ |v| OPTS.count = v }
+    parser.on(
+      '-x', '--transpose-x X', Integer, 'transpose image X pixels'
+    ){ |v| OPTS.x = v }
+    parser.on(
+      '-y', '--transpose-y Y', Integer, 'transpose image Y pixels'
+    ){ |v| OPTS.y = v }
+    parser.on(
+      '-s', '--scale FACTOR', OptionParser::DecimalNumeric, 'scale image (default: 1.0)'
+    ){ |v| OPTS.scale = v }
+    parser.separator(nil)
+    parser.on('-h', '--help', 'print this help') do
+      exit(!puts(parser))
+    end
+    parser.on('-v', '--version', 'print version information') do
+      require_relative '../lib/pixelflut/version'
+      exit(!puts("pxf-#{Pixelflut::VERSION}"))
+    end
+  end.parse!(args)
+  OPTS.image = args.first
+  OPTS
+rescue OptionParser::ParseError => e
+  err(e)
+end
+
+begin
+  parse(ARGV)
+  err('image name expected') unless OPTS.image
+  addr = Pixelflut::Sender.address(OPTS.host, OPTS.port)
+  slices = Pixelflut.as_slices(
+    source: OPTS.image,
+    count: OPTS.count,
+    x: OPTS.x,
+    y: OPTS.y,
+    scale: OPTS.scale
+  )
+  slices.size.times do |i|
+    next unless fork
+    puts 'pxf: read'
+    sender = Pixelflut::Sender.new(addr, slices[i].join)
+    puts 'pxf: loop'
+    loop{ sender.call }
+    break
   end
-  exit
+rescue Errno::EPIPE
+  err('connection lost', 2)
+rescue Interrupt
+  err('terminated', 130)
 end
-
-general_help if ARGV.empty? || ARGV[0] == '--help' || ARGV[0] == '-h'
-cmd = ARGV.shift
-fname = File.join(bin_root, 'pxf-' + cmd)
-err("no such command - #{cmd}") unless File.executable?(fname)
-exec(fname, *ARGV)

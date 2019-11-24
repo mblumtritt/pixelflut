@@ -5,22 +5,23 @@ require_relative 'lib/pixelflut/version'
 GemSpec = Gem::Specification.new do |spec|
   spec.name = 'pixelflut'
   spec.version = Pixelflut::VERSION
-  spec.summary = 'A Pixelflut server & client tool collection written in Ruby.'
+  spec.summary = 'A fast Pixelflut client written in Ruby.'
   spec.description = <<~DESCRIPTION
     Based on the idea of a simple server protocol to collaborate on a shared canvas named
-    [Pixel Flut](https://cccgoe.de/wiki/Pixelflut) this gem implements a Ruby version.
+    [Pixel Flut](https://cccgoe.de/wiki/Pixelflut) this gem implements a fast Ruby client version.
   DESCRIPTION
   spec.author = 'Mike Blumtritt'
   spec.email = 'mike.blumtritt@pm.me'
   spec.homepage = 'https://github.com/mblumtritt/pixelflut'
   spec.metadata = {
-    'issue_tracker' => 'https://github.com/mblumtritt/pixelflut/issues'
+    'source_code_uri' => 'https://github.com/mblumtritt/pixelflut',
+    'bug_tracker_uri' => 'https://github.com/mblumtritt/pixelflut/issues'
   }
   spec.rubyforge_project = spec.name
 
-  spec.add_runtime_dependency 'gosu', '>= 0.13.2'
-  spec.add_development_dependency 'bundler', '>= 1.16.0'
-  spec.add_development_dependency 'rake', '>= 12.3.0'
+  spec.add_runtime_dependency 'rmagick'
+  spec.add_development_dependency 'bundler'
+  spec.add_development_dependency 'rake'
 
   spec.platform = Gem::Platform::RUBY
   spec.required_rubygems_version = Gem::Requirement.new('>= 1.3.6')

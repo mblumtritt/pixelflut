@@ -1,8 +1,19 @@
+# frozen_string_literal: true
+
+require_relative 'pixelflut/image'
+require_relative 'pixelflut/convert'
+require_relative 'pixelflut/sender'
+
 module Pixelflut
-  LIB_DIR = File.realdirpath('../pixelflut', __FILE__).freeze
-  autoload :App, File.join(LIB_DIR, 'app.rb')
-  autoload :Server, File.join(LIB_DIR, 'server.rb')
-  autoload :Canvas, File.join(LIB_DIR, 'canvas.rb')
-  autoload :Converter, File.join(LIB_DIR, 'converter.rb')
-  autoload :VERSION, File.join(LIB_DIR, 'version.rb')
+  def self.converted(source, x = 0, y = 0, scale = nil)
+    image = Image.new(source)
+    image.scale(scale) if scale
+    Convert.each_line(image, x, y)
+  end
+
+  def self.as_slices(source:, count: 4, x: 0, y: 0, scale: nil)
+    image = Image.new(source)
+    image.scale(scale) if scale
+    Convert.as_slices(image, x, y, count)
+  end
 end
