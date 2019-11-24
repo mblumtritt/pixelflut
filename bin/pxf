@@ -37,7 +37,7 @@ def parse(args)
       '-y', '--transpose-y Y', Integer, 'transpose image Y pixels'
     ){ |v| OPTS.y = v }
     parser.on(
-      '-s', '--scale FACTOR', OptionParser::DecimalNumeric, 'scale image (default: 1.0)'
+      '-s', '--scale FACTOR', OptionParser::DecimalNumeric, 'scale image by FACTOR'
     ){ |v| OPTS.scale = v }
     parser.separator(nil)
     parser.on('-h', '--help', 'print this help') do

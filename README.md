@@ -32,7 +32,7 @@ Options:
   -c, --connections COUNT          count of connections (default 4)
   -x, --transpose-x X              transpose image X pixels
   -y, --transpose-y Y              transpose image Y pixels
-  -s, --scale FACTOR               scale image (default: 1.0)
+  -s, --scale FACTOR               scale image by FACTOR
 
   -h, --help                       print this help
   -v, --version                    print version information
