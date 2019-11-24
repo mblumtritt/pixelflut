@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+Process.setproctitle($name = 'pxf')
+$stderr.sync = $stdout.sync = true
+
 require 'optparse'
 require_relative '../lib/pixelflut'
-
-$stderr.sync = $stdout.sync = true
-$name = 'pxf'
 
 def err(msg, code = 1)
   $stderr.puts("#{$name}: #{msg}")
@@ -68,13 +68,17 @@ begin
   slices.size.times do |i|
     next unless fork
     Process.setproctitle($name = format('pxf-%02d', i + 1))
-    puts "#{$name}: read"
     sender = Pixelflut::Sender.new(addr, slices[i].join)
-    puts "#{$name}: loop"
-    loop{ sender.call }
+    slices.clear
+    puts "#{$name}: run"
+    loop{ sender.update }
   end
+rescue SocketError => e
+  err(e, 3)
+rescue LoadError => e
+  err(e, 4)
 rescue Errno::EPIPE
   err('connection lost', 2)
 rescue Interrupt
-  err('terminated', 130)
+  err('interrupted', 130)
 end

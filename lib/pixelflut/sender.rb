@@ -35,6 +35,7 @@ module Pixelflut
       end
       @state
     end
+    alias update call
 
     protected
 
@@ -61,8 +62,8 @@ module Pixelflut
     private
 
     def configure(socket)
-      # socket.sync = true
-      # socket.setsockopt(:TCP, :NODELAY, 1)
+      socket.sync = true
+      socket.setsockopt(:TCP, :NODELAY, 1)
       socket.setsockopt(:SOCKET, :KEEPALIVE, 0)
       socket.do_not_reverse_lookup = true
       socket
