@@ -48,7 +48,7 @@ def parse(args)
       exit(!puts("pxf-#{Pixelflut::VERSION}"))
     end
   end.parse!(args)
-  OPTS.image = args.first
+  OPTS.image = args.first or err('image name expected')
   OPTS
 rescue OptionParser::ParseError => e
   err(e)
@@ -56,7 +56,6 @@ end
 
 begin
   parse(ARGV)
-  err('image name expected') unless OPTS.image
   addr = Pixelflut::Sender.address(OPTS.host, OPTS.port)
   slices = Pixelflut.as_slices(
     source: OPTS.image,
