@@ -29,10 +29,7 @@ GemSpec = Gem::Specification.new do |spec|
 
   spec.require_paths = %w[lib]
   spec.bindir = 'bin'
-  spec.executables =
-    Dir
-    .glob(File.expand_path('../bin/*', __FILE__))
-    .map!{ |fn| File.basename(fn) }
+  spec.executables = %w[pxf pxf-info]
 
   all_files = %x(git ls-files -z).split(0.chr)
   spec.test_files = all_files.grep(%r{^(spec|test)/})
