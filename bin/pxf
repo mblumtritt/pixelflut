@@ -13,8 +13,8 @@ def err(msg, code = 1)
 end
 
 OPTS = Struct
-  .new(:host, :port, :count, :x, :y, :scale, :image)
-  .new('127.0.0.1', 1234, 4, 0, 0)
+  .new(:host, :port, :count, :x, :y, :mode, :scale, :image)
+  .new('127.0.0.1', 1234, 4, 0, 0, :rgbx)
 
 def parse(args)
   OptionParser.new do |parser|
@@ -40,6 +40,11 @@ def parse(args)
     parser.on(
       '-s', '--scale FACTOR', OptionParser::DecimalNumeric, 'scale image by FACTOR'
     ){ |v| OPTS.scale = v }
+    parser.on(
+      '-m', '--pixel MODE',
+      {'RGBX' => :rgbx, 'RGBA' => :rgba, 'RGB' => :rgb},
+      'select pixel coding (RGBX | RGBA | RGB)'
+    ){ |v| OPTS.mode = v }
     parser.separator(nil)
     parser.on('-h', '--help', 'print this help') do
       exit(!puts(parser))

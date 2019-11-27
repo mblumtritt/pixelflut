@@ -11,9 +11,9 @@ module Pixelflut
     Convert.each_line(image, x, y)
   end
 
-  def self.as_slices(source:, count: 4, x: 0, y: 0, scale: nil)
+  def self.as_slices(source:, count: 4, x: 0, y: 0, scale: nil, mode: :rgbx)
     image = Image.new(source)
     image.scale(scale) if scale
-    Convert.as_slices(image, x, y, count)
+    Convert.as_slices(image, x, y, mode, count)
   end
 end
