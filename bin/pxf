@@ -68,15 +68,16 @@ begin
     count: OPTS.count,
     x: OPTS.x,
     y: OPTS.y,
-    scale: OPTS.scale
+    scale: OPTS.scale,
+    mode: OPTS.mode
   )
   slices.size.times do |i|
     next unless fork
     Process.setproctitle($name = format('pxf-%02d', i + 1))
     sender = Pixelflut::Sender.new(addr, slices[i].join)
     slices.clear
-    puts "#{$name}: run"
-    sender.run
+    puts("#{$name}: run - #{sender.size} bytes")
+    sender.run{ puts("#{$name}: sent partly") }
   end
 rescue SocketError => e
   err(e, 3)

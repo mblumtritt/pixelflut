@@ -12,34 +12,29 @@ module Pixelflut
       @socket = configure(Socket.new(address.ipv6? ? :INET6 : :INET, :STREAM))
     end
 
-    def run
-      connect
-      send(@socket, @data)
+    def size
+      @data.bytesize
+    end
+
+    def run(&block)
+      @socket.connect(@addr)
+      send(@socket, @data, @data.bytesize, &block)
       @socket.close
     end
 
     private
 
-    def send(socket, data)
-      curr = String.new(data)
+    def send(socket, data, bytesize)
+      index, curr, size = 0, data, bytesize
       loop do
         written = socket.write(curr)
-        curr =
-          if (size = curr.bytesize - written) > 0
-            curr.byteslice(written, size)
-          else
-            String.new(data)
-          end
+        if (size -= written) > 0
+          yield(self) if block_given?
+          curr = data.byteslice(index += written, size)
+        else
+          index, curr, size = 0, data, bytesize
+        end
       end
-    end
-
-    def connect
-      loop do
-        (
-          :wait_writable == @socket.connect_nonblock(@addr, exception: false)
-        ) and break
-      end
-      loop{ @socket.wait_writable(10) and break }
     end
 
     def configure(socket)
