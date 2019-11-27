@@ -1,0 +1,32 @@
+#! /bin/sh
+
+set -e
+
+if [ "$1" = '--help' ]
+then
+  echo "Usage: ${0##*/} [-p|--port PORT] ADDRESS
+
+Requests screen size of Pixelflut server at ADDRESS.
+"
+  exit 0
+fi
+
+PORT="1234"
+ADDRESS=""
+
+while [ $# -gt 0 ]
+do
+  key="$1"
+  case $key in
+  -p|--port)
+    PORT="$2"
+    shift; shift
+    ;;
+  *)
+    ADDRESS="$key"
+    shift
+    ;;
+  esac
+done
+
+echo "SIZE\nQUIT\n" | nc "$ADDRESS" "$PORT"
