@@ -12,7 +12,8 @@ def err(msg, code = 1)
   exit(code)
 end
 
-OPTS = Struct
+OPTS =
+  Struct
   .new(:host, :port, :count, :x, :y, :mode, :scale, :image)
   .new('127.0.0.1', 1234, 4, 0, 0, :rgbx)
 
@@ -62,8 +63,8 @@ end
 
 begin
   parse(ARGV)
-  addr = Pixelflut::Sender.address(OPTS.host, OPTS.port)
-  slices = Pixelflut.as_slices(
+  address = Pixelflut::Sender.address(OPTS.host, OPTS.port)
+  data = Pixelflut.sliced(
     source: OPTS.image,
     count: OPTS.count,
     x: OPTS.x,
@@ -71,18 +72,19 @@ begin
     scale: OPTS.scale,
     mode: OPTS.mode
   )
-  slices.size.times do |i|
+  data.size.times do |i|
     next unless fork
     Process.setproctitle($name = format('pxf-%02d', i + 1))
-    sender = Pixelflut::Sender.new(addr, slices[i].join)
-    slices.clear
-    puts("#{$name}: run - #{sender.size} bytes")
-    sender.run{ puts("#{$name}: sent partly") }
+    data = data[i].join
+    puts("#{$name}: run - #{data.bytesize} bytes")
+    Pixelflut::Sender.send(address, data)
   end
 rescue SocketError => e
   err(e, 3)
 rescue LoadError => e
   err(e, 4)
+rescue Errno::ECONNREFUSED
+  err('unable to connect', 2)
 rescue Errno::EPIPE
   err('connection lost', 2)
 rescue Interrupt
