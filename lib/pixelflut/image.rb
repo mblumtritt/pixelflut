@@ -26,7 +26,7 @@ module Pixelflut
 
     def each_pixel
       return to_enum(__method__) unless block_given?
-      @image.each_pixel{ |px, x, y| 0 != px.alpha and yield(x, y, px) }
+      @image.each_pixel { |px, x, y| 0 != px.alpha and yield(x, y, px) }
     end
   end
 end

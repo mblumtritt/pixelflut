@@ -10,7 +10,7 @@ module Pixelflut
 
     def send(address, data)
       socket = create_socket(address)
-      loop{ socket.write(data) }
+      loop { socket.write(data) }
     end
 
     def create_socket(address)

@@ -7,7 +7,7 @@ $stderr.sync = $stdout.sync = true
 require 'optparse'
 require_relative '../lib/pixelflut'
 
-def err(msg, code = 1)
+def err(code, msg)
   $stderr.puts("#{$name}: #{msg}")
   exit(code)
 end
@@ -55,10 +55,10 @@ def parse(args)
       exit(!puts("pxf-#{Pixelflut::VERSION}"))
     end
   end.parse!(args)
-  OPTS.image = args.first or err('image name expected')
+  OPTS.image = args.first or err(1, 'image name expected')
   OPTS
 rescue OptionParser::ParseError => e
-  err(e)
+  err(1, e)
 end
 
 begin
@@ -80,13 +80,13 @@ begin
     Pixelflut::Sender.send(address, data)
   end
 rescue SocketError => e
-  err(e, 3)
+  err(3, e)
 rescue LoadError => e
-  err(e, 4)
+  err(4, e)
 rescue Errno::ECONNREFUSED
-  err('unable to connect', 2)
+  err(2, 'unable to connect')
 rescue Errno::EPIPE
-  err('connection lost', 2)
+  err(2, 'connection lost')
 rescue Interrupt
-  err('interrupted', 130)
+  err(130, 'interrupted')
 end
