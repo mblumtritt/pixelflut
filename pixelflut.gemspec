@@ -20,6 +20,7 @@ GemSpec = Gem::Specification.new do |spec|
   spec.rubyforge_project = spec.name
 
   spec.add_runtime_dependency 'rmagick'
+  spec.add_runtime_dependency 'mini-cli'
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'rake'
 

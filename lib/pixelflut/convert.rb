@@ -3,7 +3,7 @@ require 'rmagick'
 module Pixelflut
   module Convert
     def self.random_slices(image, dx, dy, mode, count)
-      mode = MODE.fetch(mode) if Symbol === mode
+      mode = MODE.fetch(mode)
       ret, idx = Array.new(count) { [] }, 0
       image.each_pixel.to_a.shuffle!.each do |x, y, px|
         ret[idx % count] << "PX #{x + dx} #{y + dy} #{mode.call(px)}\n"
