@@ -4,12 +4,11 @@ module Pixelflut
   module Convert
     def self.random_slices(image, dx, dy, mode, count)
       mode = MODE.fetch(mode)
-      ret, idx = Array.new(count) { [] }, 0
-      image.each_pixel.to_a.shuffle!.each do |x, y, px|
-        ret[idx % count] << "PX #{x + dx} #{y + dy} #{mode.call(px)}\n"
-        idx += 1
+      Array.new(count) { [] }.tap do |ret|
+        image.each_pixel.to_a.shuffle!.each_with_index do |(x, y, px), idx|
+          ret[idx % count] << "PX #{x + dx} #{y + dy} #{mode.call(px)}\n"
+        end
       end
-      ret
     end
 
     MODE = {

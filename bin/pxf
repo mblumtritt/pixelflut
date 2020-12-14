@@ -42,7 +42,7 @@ main do |opts|
   data = Pixelflut.sliced(**opts.to_h)
   data.size.times do |i|
     next unless fork
-    Process.setproctitle(name(format('pxf-%02d', i + 1)))
+    Process.setproctitle(name(format("#{name}-%02d", i + 1)))
     data = data[i].join
     puts("#{name}: run - #{data.bytesize} bytes")
     Pixelflut::Sender.send(address, data)
