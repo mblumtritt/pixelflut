@@ -30,7 +30,7 @@ GemSpec = Gem::Specification.new do |spec|
   spec.bindir = 'bin'
   spec.executables = %w[pxf pxf-info]
 
-  all_files = %x(git ls-files -z).split(0.chr)
+  all_files = Dir.chdir(__dir__) { `git ls-files -z`.split(0.chr) }
   spec.test_files = all_files.grep(%r{^(spec|test)/})
   spec.files = all_files - spec.test_files
 

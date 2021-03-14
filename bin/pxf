@@ -6,11 +6,11 @@ include MiniCli
 
 help <<~end, 'IMAGE'
       --host ADDRESS        target host address
-  -p, --port NUMBER         target port (default 1234)
-  -c, --connections COUNT   count of connections (default 4)
+  -p, --port PORT           target port (default 1234)
+  -c, --connections CONN    count of connections (default 4)
   -x, --transpose-x X       transpose image X pixels
   -y, --transpose-y Y       transpose image Y pixels
-  -s, --scale FACTOR        scale image by FACTOR
+  -s, --scale SCALE         scale image by SCALE factor
   -m, --pixel MODE          select pixel coding (RGBX | RGBA | RGB)
 
   -h, --help                print this help
@@ -26,12 +26,12 @@ parse_argv do |args|
     end
   end.new(
     args['ADDRESS'] || '127.0.0.1',
-    (args['NUMBER'] || 1234).to_i,
-    (args['COUNT'] || 4).to_i,
+    (args['PORT'] || 1234).to_i,
+    (args['CONN'] || 4).to_i,
     args['X'].to_i,
     args['Y'].to_i,
     { 'RGBA' => :rgba, 'RGB' => :rgb }[args['MODE']] || :rgbx,
-    args.key?('FACTOR') ? args['FACTOR'].to_f : nil,
+    args.key?('SCALE') ? args['SCALE'].to_f : nil,
     args['IMAGE']
   )
 end
@@ -45,6 +45,8 @@ main do |opts|
     Process.setproctitle(name(format("#{name}-%02d", i + 1)))
     data = data[i].join
     puts("#{name}: run - #{data.bytesize} bytes")
+    GC.start
+    GC.disable
     Pixelflut::Sender.send(address, data)
   end
 rescue SocketError => e

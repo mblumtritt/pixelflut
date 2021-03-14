@@ -2,18 +2,16 @@ require 'socket'
 
 module Pixelflut
   module Sender
-    module_function
-
-    def address(host, port)
+    def self.address(host, port)
       Addrinfo.tcp(host, port)
     end
 
-    def send(address, data)
+    def self.send(address, data)
       socket = create_socket(address)
       loop { socket.write(data) }
     end
 
-    def create_socket(address)
+    def self.create_socket(address)
       socket = Socket.new(address.ipv6? ? :INET6 : :INET, :STREAM)
 
       # socket.sync = true
