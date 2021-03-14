@@ -2,37 +2,33 @@
 
 require_relative 'lib/pixelflut/version'
 
-GemSpec = Gem::Specification.new do |spec|
+Gem::Specification.new do |spec|
   spec.name = 'pixelflut'
   spec.version = Pixelflut::VERSION
+  spec.author = 'Mike Blumtritt'
+
+  spec.required_ruby_version = '>= 2.7.2'
+
   spec.summary = 'A fast Pixelflut client written in Ruby.'
   spec.description = <<~DESCRIPTION
-    Based on the idea of a simple server protocol to collaborate on a shared canvas named
-    [Pixel Flut](https://cccgoe.de/wiki/Pixelflut) this gem implements a fast Ruby client version.
+    Based on the idea of a simple server protocol to collaborate on a shared
+    canvas named [Pixelflut](https://cccgoe.de/wiki/Pixelflut) this gem
+    implements a fast Ruby client version.
   DESCRIPTION
-  spec.author = 'Mike Blumtritt'
-  spec.email = 'mike.blumtritt@pm.me'
   spec.homepage = 'https://github.com/mblumtritt/pixelflut'
-  spec.metadata = {
-    'source_code_uri' => 'https://github.com/mblumtritt/pixelflut',
-    'bug_tracker_uri' => 'https://github.com/mblumtritt/pixelflut/issues'
-  }
-  spec.rubyforge_project = spec.name
+
+  spec.metadata['source_code_uri'] = 'https://github.com/mblumtritt/pixelflut'
+  spec.metadata['bug_tracker_uri'] =
+    'https://github.com/mblumtritt/pixelflut/issues'
 
   spec.add_runtime_dependency 'rmagick'
   spec.add_runtime_dependency 'mini-cli'
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'rake'
 
-  spec.required_ruby_version = '>= 2.7.1'
-
-  spec.require_paths = %w[lib]
   spec.bindir = 'bin'
   spec.executables = %w[pxf pxf-info]
 
-  all_files = Dir.chdir(__dir__) { `git ls-files -z`.split(0.chr) }
-  spec.test_files = all_files.grep(%r{^(spec|test)/})
-  spec.files = all_files - spec.test_files
-
+  spec.files = Dir.chdir(__dir__) { `git ls-files -z`.split(0.chr) }
   spec.extra_rdoc_files = %w[README.md]
 end

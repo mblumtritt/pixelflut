@@ -8,11 +8,11 @@ help <<~end, 'IMAGE'
       --host ADDRESS        target host address
   -p, --port PORT           target port (default 1234)
   -c, --connections CONN    count of connections (default 4)
+  -b, --bytes BYTES         send junks of BYTES size
   -x, --transpose-x X       transpose image X pixels
   -y, --transpose-y Y       transpose image Y pixels
   -s, --scale SCALE         scale image by SCALE factor
   -m, --pixel MODE          select pixel coding (RGBX | RGBA | RGB)
-
   -h, --help                print this help
 end
 
@@ -20,14 +20,15 @@ Process.setproctitle(name)
 $stderr.sync = $stdout.sync = true
 
 parse_argv do |args|
-  Struct.new(:host, :port, :count, :x, :y, :mode, :scale, :source) do
+  Struct.new(:host, :port, :count, :bytes, :x, :y, :mode, :scale, :source) do
     def to_h
-      { source: source, count: count, x: x, y: y, scale: scale, mode: mode }
+      { source: source, x: x, y: y, scale: scale, mode: mode }
     end
   end.new(
     args['ADDRESS'] || '127.0.0.1',
     (args['PORT'] || 1234).to_i,
     (args['CONN'] || 4).to_i,
+    args['BYTES'].to_i,
     args['X'].to_i,
     args['Y'].to_i,
     { 'RGBA' => :rgba, 'RGB' => :rgb }[args['MODE']] || :rgbx,
@@ -39,15 +40,15 @@ end
 main do |opts|
   require_relative '../lib/pixelflut'
   address = Pixelflut::Sender.address(opts.host, opts.port)
-  data = Pixelflut.sliced(**opts.to_h)
+  data = create_data(opts)
+  print("spawn #{data.size}")
   data.size.times do |i|
     next unless fork
     Process.setproctitle(name(format("#{name}-%02d", i + 1)))
     data = data[i].join
-    puts("#{name}: run - #{data.bytesize} bytes")
     GC.start
     GC.disable
-    Pixelflut::Sender.send(address, data)
+    Pixelflut::Sender.send(address, data) { print('.') }
   end
 rescue SocketError => e
   error(3, e)
@@ -57,4 +58,10 @@ rescue Errno::ECONNREFUSED
   error(2, 'unable to connect')
 rescue Errno::EPIPE
   error(2, 'connection lost')
+end
+
+def create_data(opts)
+  data = Pixelflut.convert(**opts.to_h)
+  return Pixelflut.slices(data, count: opts.count) if opts.bytes.zero?
+  Pixelflut.packages(data, bytes: opts.bytes)
 end
