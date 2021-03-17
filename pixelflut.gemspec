@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
     'https://github.com/mblumtritt/pixelflut/issues'
 
   spec.add_runtime_dependency 'rmagick'
-  spec.add_runtime_dependency 'mini-cli'
+  spec.add_runtime_dependency 'mini-cli', '>= 0.4.0'
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'rake'
 

@@ -15,9 +15,8 @@ module Pixelflut
       end
     end
 
-    def packages(lines, bytes:)
-      ret = [current = []]
-      size = 0
+    def junks(lines, bytes:)
+      size, ret = 0, [current = []]
       lines.each do |line|
         next current << line if (size += line.bytesize) < bytes
         ret << (current = [line])
@@ -25,6 +24,7 @@ module Pixelflut
       end
       ret
     end
+    alias packages junks # backward compatibility
 
     private
 

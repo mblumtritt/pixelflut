@@ -1,9 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'mini-cli'
-include MiniCli
-
 help <<~end, 'IMAGE'
       --host ADDRESS        target host address
   -p, --port PORT           target port (default 1234)
@@ -16,31 +13,8 @@ help <<~end, 'IMAGE'
   -h, --help                print this help
 end
 
-Process.setproctitle(name)
-$stderr.sync = $stdout.sync = true
-
-parse_argv do |args|
-  Struct.new(:host, :port, :count, :bytes, :x, :y, :mode, :scale, :source) do
-    def to_h
-      { source: source, x: x, y: y, scale: scale, mode: mode }
-    end
-  end.new(
-    args['ADDRESS'] || '127.0.0.1',
-    (args['PORT'] || 1234).to_i,
-    (args['CONN'] || 4).to_i,
-    args['BYTES'].to_i,
-    args['X'].to_i,
-    args['Y'].to_i,
-    { 'RGBA' => :rgba, 'RGB' => :rgb }[args['MODE']] || :rgbx,
-    args.key?('SCALE') ? args['SCALE'].to_f : nil,
-    args['IMAGE']
-  )
-end
-
 main do |opts|
-  require_relative '../lib/pixelflut'
-  address = Pixelflut::Sender.address(opts.host, opts.port)
-  data = create_data(opts)
+  data = create_junks(opts)
   print("spawn #{data.size}")
   data.size.times do |i|
     next unless fork
@@ -48,7 +22,7 @@ main do |opts|
     data = data[i].join
     GC.start
     GC.disable
-    Pixelflut::Sender.send(address, data) { print('.') }
+    Pixelflut::Sender.send(opts.address, data) { print('.') }
   end
 rescue SocketError => e
   error(3, e)
@@ -60,8 +34,36 @@ rescue Errno::EPIPE
   error(2, 'connection lost')
 end
 
-def create_data(opts)
-  data = Pixelflut.convert(**opts.to_h)
-  return Pixelflut.slices(data, count: opts.count) if opts.bytes.zero?
-  Pixelflut.packages(data, bytes: opts.bytes)
+def create_junks(opts)
+  lines = Pixelflut.convert(**opts.to_h)
+  return Pixelflut.slices(lines, count: opts.count) if opts.bytes.zero?
+  Pixelflut.junks(lines, bytes: opts.bytes)
 end
+
+before do
+  $stderr.sync = $stdout.sync = true
+  Process.setproctitle(name)
+  require_relative('../lib/pixelflut')
+end
+
+parse_argv do |args|
+  Struct.new(:address, :count, :bytes, :x, :y, :mode, :scale, :source) do
+    def to_h
+      { source: source, x: x, y: y, scale: scale, mode: mode }
+    end
+  end.new(
+    Pixelflut::Sender.address(
+      args['ADDRESS'] || '127.0.0.1',
+      (args['PORT'] || 1234).to_i
+    ),
+    (args['CONN'] || 4).to_i,
+    args['BYTES'].to_i,
+    args['X'].to_i,
+    args['Y'].to_i,
+    { 'RGBA' => :rgba, 'RGB' => :rgb }[args['MODE']] || :rgbx,
+    args.key?('SCALE') ? args['SCALE'].to_f : nil,
+    args['IMAGE']
+  )
+end
+
+BEGIN { require('mini-cli') and include(MiniCli) }
