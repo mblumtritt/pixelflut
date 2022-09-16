@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 require 'rmagick'
 
 module Pixelflut
   class Image
     def initialize(file_name)
-      @image = Magick::ImageList.new(file_name)[0]
+      @image = Magick::ImageList.new(file_name).first
     rescue Magick::ImageMagickError => e
       raise(LoadError, e.message, cause: e)
     end

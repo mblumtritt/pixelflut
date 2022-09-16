@@ -1,69 +1,152 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-help <<~end, 'IMAGE'
-      --host ADDRESS        target host address
-  -p, --port PORT           target port (default 1234)
-  -c, --connections CONN    count of connections (default 4)
-  -b, --bytes BYTES         send junks of BYTES size
-  -x, --transpose-x X       transpose image X pixels
-  -y, --transpose-y Y       transpose image Y pixels
-  -s, --scale SCALE         scale image by SCALE factor
-  -m, --pixel MODE          select pixel coding (RGBX | RGBA | RGB)
-  -h, --help                print this help
+$stdout.sync = $stderr.sync = true
+Process.setproctitle($name = 'pxf')
+
+if ARGV.index('-h') || ARGV.index('--help')
+  puts <<~HELP
+    Usage: #{$name} <image> [options]
+
+    Options:
+          --host <address>       target host address
+      -p, --port <port>          target port (default 1234)
+      -c, --connections <count>  count of connections (default 4)
+      -b, --bytes <bytes>        send junks of <bytes> size
+      -x, --transpose-x <x>      transpose image <x> pixels
+      -y, --transpose-y <y>      transpose image <y> pixels
+      -s, --scale <scale>        scale image by factor
+      -m, --pixel <mode>         select pixel coding (RGBX | RGBA | RGB)
+      -h, --help                 print this help
+  HELP
+  exit
 end
 
-main do |opts|
-  data = create_junks(opts)
+def error(msg, code: 1)
+  $stderr.puts("#{$name}-error: #{msg}")
+  exit(code)
+end
+
+error('Argument missing') if ARGV.empty?
+
+Configuration =
+  Class
+    .new do
+      attr_reader :image
+      attr_reader :num_connections, :bytes
+      attr_reader :trans_x, :trans_y, :scale, :mode
+
+      def initialize
+        @address = '127.0.0.1'
+        @port = 1234
+        @num_connections = 4
+        @bytes = 0
+        @trans_x = 0
+        @trans_y = 0
+        @mode = :rgbx
+      end
+
+      def parse!(argv)
+        argv = Array.new(argv)
+        until argv.empty?
+          case arg = argv.shift
+          when '--host'
+            @address = as_str(argv.shift, 'host')
+          when '-p', '--port'
+            @port = as_uint(argv.shift, 'port')
+          when '-c', '--connections'
+            @num_connections = as_uint(argv.shift, 'connections')
+          when '-b', '--bytes'
+            @bytes = as_uint(argv.shift, 'bytes')
+          when '-x', '--transpose-x'
+            @trans_x = argv.shift.to_i
+          when '-y', '--transpose-y'
+            @trans_y = argv.shift.to_i
+          when '-s', '--scale'
+            @scale = as_float(argv.shift, 'scale')
+          when '-m', '--pixel'
+            @mode = as_mode(argv.shift, 'mode')
+          else
+            raise(ArgumentError, "Invalid option - #{arg}") if @image
+            @image = arg
+          end
+        end
+      end
+
+      def address
+        Pixelflut::Sender.address(@address, @port)
+      end
+
+      def options
+        { source: @image, x: @trans_x, y: @trans_y, scale: @scale, mode: @mode }
+      end
+
+      private
+
+      def invalid(value, name)
+        raise(ArgumentError, "Value for #{name} missing") if value.nil?
+        raise(ArgumentError, "Invalid value for #{name} - '#{value}'")
+      end
+
+      def as_uint(value, name)
+        ret = value.to_i
+        ret.positive? ? ret : invalid(value, name)
+      end
+
+      def as_str(value, name)
+        value.nil? || value.empty? ? invalid(value, name) : value
+      end
+
+      def as_float(value, name)
+        ret = value.to_f
+        ret.positive? ? ret : invalid(value, name)
+      end
+
+      def as_mode(value, name)
+        case value.downcase
+        when 'rgbx'
+          :rgbx
+        when 'rgba'
+          :rgba
+        when 'rgb'
+          :rgb
+        else
+          invalid(value, name)
+        end
+      end
+    end
+    .new
+
+def create_junks
+  lines = Pixelflut.convert(**Configuration.options)
+  if Configuration.bytes.zero?
+    return Pixelflut.slices(lines, count: Configuration.num_connections)
+  end
+  Pixelflut.junks(lines, bytes: Configuration.bytes)
+end
+
+begin
+  Configuration.parse!(ARGV)
+  require_relative('../lib/pixelflut')
+  data = create_junks
+  error("Too many subprocesses - #{data.size}") if data.size > 256
   print("spawn #{data.size}")
   data.size.times do |i|
     next unless fork
-    Process.setproctitle(name(format("#{name}-%02d", i + 1)))
+    Process.setproctitle($name = format("#{$name}-%02d", i + 1))
     data = data[i].join
     GC.start
     GC.disable
-    Pixelflut::Sender.send(opts.address, data) { print('.') }
+    Pixelflut::Sender.send(Configuration.address, data) { print('.') }
   end
-rescue SocketError => e
-  error(3, e)
+rescue ArgumentError => e
+  error(e)
 rescue LoadError => e
-  error(4, e)
+  error(e, code: 4)
 rescue Errno::ECONNREFUSED
-  error(2, 'unable to connect')
+  error('unable to connect', code: 2)
 rescue Errno::EPIPE
-  error(2, 'connection lost')
+  error('connection lost', code: 2)
+rescue SocketError => e
+  error(e, code: 3)
 end
-
-def create_junks(opts)
-  lines = Pixelflut.convert(**opts.to_h)
-  return Pixelflut.slices(lines, count: opts.count) if opts.bytes.zero?
-  Pixelflut.junks(lines, bytes: opts.bytes)
-end
-
-before do
-  $stderr.sync = $stdout.sync = true
-  Process.setproctitle(name)
-  require_relative('../lib/pixelflut')
-end
-
-parse_argv do |args|
-  Struct.new(:address, :count, :bytes, :x, :y, :mode, :scale, :source) do
-    def to_h
-      { source: source, x: x, y: y, scale: scale, mode: mode }
-    end
-  end.new(
-    Pixelflut::Sender.address(
-      args['ADDRESS'] || '127.0.0.1',
-      (args['PORT'] || 1234).to_i
-    ),
-    (args['CONN'] || 4).to_i,
-    args['BYTES'].to_i,
-    args['X'].to_i,
-    args['Y'].to_i,
-    { 'RGBA' => :rgba, 'RGB' => :rgb }[args['MODE']] || :rgbx,
-    args.key?('SCALE') ? args['SCALE'].to_f : nil,
-    args['IMAGE']
-  )
-end
-
-BEGIN { require('mini-cli') and include(MiniCli) }

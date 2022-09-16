@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'socket'
 
 module Pixelflut
@@ -16,7 +18,7 @@ module Pixelflut
       Socket
         .new(address.ipv6? ? :INET6 : :INET, :STREAM)
         .tap do |socket|
-          socket.sync = false
+          socket.sync = true
           socket.setsockopt(:TCP, :NODELAY, 0)
           socket.setsockopt(:SOCKET, :KEEPALIVE, 0)
           socket.do_not_reverse_lookup = true

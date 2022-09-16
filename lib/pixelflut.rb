@@ -10,9 +10,11 @@ module Pixelflut
     end
 
     def slices(lines, count: 4)
-      Array.new(count) { [] }.tap do |ret|
-        lines.each_with_index { |line, idx| ret[idx % count] << line }
-      end
+      Array
+        .new(count) { [] }
+        .tap do |ret|
+          lines.each_with_index { |line, idx| ret[idx % count] << line }
+        end
     end
 
     def junks(lines, bytes:)
@@ -24,14 +26,15 @@ module Pixelflut
       end
       ret
     end
-    alias packages junks # backward compatibility
 
     private
 
     def _convert(image, dx, dy)
-      image.each_pixel.to_a.map! do |x, y, px|
-        "PX #{x + dx} #{y + dy} #{yield(px)}\n"
-      end.shuffle!
+      image
+        .each_pixel
+        .to_a
+        .map! { |x, y, px| "PX #{x + dx} #{y + dy} #{yield(px)}\n" }
+        .shuffle!
     end
 
     def as_image(source, scale)
@@ -41,9 +44,9 @@ module Pixelflut
     def as_cvt(mode)
       case mode
       when :rgb
-        lambda { |px| px.to_color(Magick::AllCompliance, false, 8, true)[1, 6] }
+        ->(px) { px.to_color(Magick::AllCompliance, false, 8, true)[1, 6] }
       when :rgba
-        lambda { |px| px.to_color(Magick::AllCompliance, true, 8, true)[1, 8] }
+        ->(px) { px.to_color(Magick::AllCompliance, true, 8, true)[1, 8] }
       else
         lambda do |px|
           px.to_color(Magick::AllCompliance, false, 8, true)[

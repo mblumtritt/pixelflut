@@ -1,3 +1,10 @@
 # frozen_string_literal: true
 
-source('https://rubygems.org') { gemspec }
+source('https://rubygems.org')
+
+group :development, :test do
+  gem 'bundler'
+  gem 'rake'
+end
+
+gemspec
