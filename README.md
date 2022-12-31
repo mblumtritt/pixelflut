@@ -30,7 +30,6 @@ Options:
     --host ADDRESS        target host address
 -p, --port PORT           target port (default 1234)
 -c, --connections CONN    count of connections (default 4)
--b, --bytes BYTES         send junks of BYTES size
 -x, --transpose-x X       transpose image X pixels
 -y, --transpose-y Y       transpose image Y pixels
 -s, --scale SCALE         scale image by SCALE factor

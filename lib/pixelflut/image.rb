@@ -20,15 +20,24 @@ module Pixelflut
 
     def resize_to(width, height = nil)
       @image.resize_to_fit!(width, height)
+      self
     end
 
     def scale(factor)
       @image.scale!(factor)
+      self
     end
 
-    def each_pixel
-      return to_enum(__method__) unless block_given?
-      @image.each_pixel { |px, x, y| 0 != px.alpha and yield(x, y, px) }
+    def converted
+      c = @image.columns
+      r = @image.rows
+      n = -1
+      @image
+        .get_pixels(0, 0, c, r)
+        .filter_map do |px|
+          n += 1
+          yield(n % c, n / r, px)
+        end
     end
   end
 end
