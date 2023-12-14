@@ -16,11 +16,12 @@ Gem::Specification.new do |spec|
   spec.homepage = 'https://github.com/mblumtritt/pixelflut'
   spec.metadata['source_code_uri'] = spec.homepage
   spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
+  spec.metadata['rubygems_mfa_required'] = 'true'
 
   spec.required_ruby_version = '>= 2.7.2'
-  spec.add_runtime_dependency 'rmagick'
+  spec.add_runtime_dependency 'chunky_png'
 
-  spec.executables = %w[pxf pxf-info]
+  spec.executables = %w[pxf]
   spec.files = Dir['lib/**/*']
   spec.extra_rdoc_files = %w[README.md]
 end

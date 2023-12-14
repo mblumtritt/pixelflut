@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
-source('https://rubygems.org')
+source 'https://rubygems.org'
 
-gem 'rmagick', require: false
+gem 'chunky_png', require: false
 
-group :development, :test do
+group :development do
   gem 'bundler', require: false
   gem 'rake', require: false
-  gem 'prettier', require: false
 end
 
 gemspec

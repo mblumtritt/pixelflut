@@ -2,29 +2,29 @@
 # frozen_string_literal: true
 
 $stdout.sync = $stderr.sync = true
-Process.setproctitle($name = 'pxf')
+$name = Process.setproctitle(File.basename(Process.argv0))
 
 if ARGV.index('-h') || ARGV.index('--help')
   puts <<~HELP
-    Usage: #{$name} <image> [options]
+    Usage: #{$name} [options] <png_image>
 
     Options:
-          --host <address>       target host address
+          --host <address>       target host address (default 127.0.0.1)
       -p, --port <port>          target port (default 1234)
       -c, --connections <count>  count of connections (default 4)
+      -m, --mode <mode>          select pixel encoding (TEXT | BIN)
+      -t, --threads              use threads instead of processes
       -x, --transpose-x <x>      transpose image <x> pixels
       -y, --transpose-y <y>      transpose image <y> pixels
-      -s, --scale <scale>        scale image by factor
-      -m, --pixel <mode>         select pixel coding (RGBX | RGBA | RGB)
       -h, --help                 print this help
-      -v, --version              print version
+      -v, --version              print version information
   HELP
   exit
 end
 
 if ARGV.index('-v') || ARGV.index('--version')
   require_relative('../lib/pixelflut/version')
-  puts("#{$name} v#{Pixelflut::VERSION}")
+  puts("#{$name} - Pixelflut v#{Pixelflut::VERSION}")
   exit
 end
 
@@ -35,48 +35,15 @@ end
 
 die!('argument missing') if ARGV.empty?
 
+require_relative('../lib/pixelflut')
+
 module Configuration
   class << self
-    def parse(argv)
-      argv = Array.new(argv)
-      until argv.empty?
-        case arg = argv.shift
-        when '--host'
-          @address = as_str(argv.shift, 'host')
-        when '-p', '--port'
-          @port = as_uint(argv.shift, 'port')
-        when '-c', '--connections'
-          @num_connections = as_uint(argv.shift, 'connections')
-        when '-x', '--transpose-x'
-          @trans_x = argv.shift.to_i
-        when '-y', '--transpose-y'
-          @trans_y = argv.shift.to_i
-        when '-s', '--scale'
-          @scale = as_float(argv.shift, 'scale')
-        when '-m', '--pixel'
-          @mode = as_mode(argv.shift, 'mode')
-        else
-          die!("invalid option - #{arg}") if @image
-          @image = arg
-        end
-      end
-      die!('<image> missing') if @image.nil?
-      self
-    end
-
-    def options
-      {
-        source: @image,
-        x: @trans_x || 0,
-        y: @trans_y || 0,
-        scale: @scale,
-        mode: @mode || 'rgbx',
-        slices: @num_connections || 4
-      }
-    end
+    attr_reader :use_threads
 
     def address
-      Pixelflut::Sender.as_address(@address || '127.0.0.1', @port || 1234)
+      require_relative('../lib/pixelflut/sender')
+      Pixelflut::Sender.as_address(@host || '127.0.0.1', @port || 1234)
     end
 
     private
@@ -91,42 +58,66 @@ module Configuration
     end
 
     def as_uint(value, name)
-      ret = value.to_i
-      ret.positive? ? ret : invalid(value, name)
-    end
-
-    def as_float(value, name)
-      ret = value.to_f
-      ret.positive? ? ret : invalid(value, name)
+      (ret = value.to_i).positive? ? ret : invalid(value, name)
     end
 
     def as_mode(value, name)
-      v = value.downcase
-      return v if %w[rgbx rgba rgb].include?(v)
-      invalid(value, name)
+      %w[text bin].include?(v = value.downcase) ? v : invalid(value, name)
     end
   end
 
-  parse(ARGV)
+  until ARGV.empty?
+    case arg = ARGV.shift
+    when '--host'
+      @host = as_str(ARGV.shift, 'host')
+    when '-p', '--port'
+      @port = as_uint(ARGV.shift, 'port')
+    when '-c', '--connections'
+      Pixelflut.count = as_uint(ARGV.shift, 'connections')
+      die!("too many connections - #{Pixelflut.count}") if Pixelflut.count > 255
+    when '-m', '--mode', '--pixel'
+      Pixelflut.mode = as_mode(ARGV.shift, 'mode')
+    when '-t', '--use-threads'
+      @use_threads = true
+    when '-x', '--transpose-x'
+      Pixelflut.delta_x = ARGV.shift.to_i
+    when '-y', '--transpose-y'
+      Pixelflut.delta_y = ARGV.shift.to_i
+    else
+      die!("invalid option - #{arg}") if Pixelflut.file_name
+      Pixelflut.file_name = arg
+    end
+  end
+
+  die!('<image> missing') unless Pixelflut.file_name
+end
+
+def use_processes(address, data)
+  puts("#{$name}: start #{data.size} processes for #{data.sum(&:size)} bytes")
+  data.size.times do |i|
+    next unless fork
+    data = data[i]
+    GC.start
+    $name = Process.setproctitle("#{$name}-#{'0' if i < 9}#{i + 1}")
+    Pixelflut::Sender.send(address, data) do |size|
+      puts("#{$name}: #{size} bytes")
+    end
+  end
+end
+
+def use_threads(address, data)
+  puts("#{$name}: start #{data.size} threads for #{data.sum(&:size)} bytes")
+  Thread.report_on_exception = false
+  data.map! { |slice| Thread.start { Pixelflut::Sender.send(address, slice) } }
+  GC.start
+  data.each(&:join)
 end
 
 begin
-  require_relative('../lib/pixelflut/sender')
-  address = Configuration.address
-  require_relative('../lib/pixelflut')
-  data = Pixelflut.slices(**Configuration.options)
-  count = data.size
-  die!("too many subprocesses - #{count}") if count > 256
-  puts("#{$name} spawn #{count} processes:")
-  count.times do |i|
-    next unless fork
-    Process.setproctitle($name = format("%s-%02d", $name, i + 1))
-    data = data[i]
-    Pixelflut::Sender.send(address, data) do |size|
-      GC.start
-      GC.disable
-      puts("#{$name}: #{size} bytes")
-    end
+  if Configuration.use_threads
+    use_threads(Configuration.address, Pixelflut.data)
+  else
+    use_processes(Configuration.address, Pixelflut.data)
   end
 rescue Errno::ECONNREFUSED
   die!('unable to connect', code: 2)
@@ -137,6 +128,6 @@ rescue SocketError => e
 rescue LoadError => e
   die!(e, code: 4)
 rescue Interrupt
-  puts("\b\b  ") if $stdout.tty?
+  print("\b\b") if $stdout.tty?
   die!('aborted', code: 130)
 end

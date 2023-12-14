@@ -1,46 +1,99 @@
 # frozen_string_literal: true
 
-require_relative 'pixelflut/sender'
-require_relative 'pixelflut/image'
-
 module Pixelflut
   class << self
-    def slices(source:, x: 0, y: 0, scale: nil, mode: :rgbx, slices:)
-      i = -1
-      pixels(as_image(source, scale), x, y, as_cvt(mode))
-        .shuffle!
-        .group_by { (i += 1) % slices }
-        .transform_values!(&:join)
-        .values
+    attr_accessor :file_name, :count, :mode, :delta_x, :delta_y
+
+    def data
+      sliced(convert(*load).shuffle!, @count).map!(&:join)
     end
 
     private
 
-    def pixels(image, dx, dy, cvt)
-      image.converted do |x, y, px|
-        "PX #{x + dx} #{y + dy} #{cvt[px]}\n" if 0 != px.alpha
+    def load
+      require('chunky_png') unless defined?(ChunkyPNG)
+      image = ChunkyPNG::Canvas.from_file(@file_name)
+      [image.width, image.height, image.pixels.pack("N#{image.pixels.size}")]
+    rescue Errno::ENOENT => e
+      raise(LoadError, e.message, cause: e)
+    end
+
+    # def load_rmagick
+    #   require('rmagick') unless defined?(Magick)
+    #   image = Magick::Image.read(@file_name).first
+    #   image.scale!(@scale) if @scale
+    #   [
+    #     image.columns,
+    #     image.rows,
+    #     image.export_pixels_to_str(0, 0, image.columns, image.rows, 'rgba')
+    #   ]
+    # rescue Magick::ImageMagickError => e
+    #   raise(LoadError, e.message, cause: e)
+    # end
+
+    def sliced(array, number)
+      division = array.size / number
+      modulo = array.size % number
+      pos = 0
+      Array.new(number) do |index|
+        length = division + (modulo > 0 && modulo > index ? 1 : 0)
+        slice = array.slice(pos, length)
+        pos += length
+        slice
       end
     end
 
-    def as_image(source, scale)
-      image = Image.new(source)
-      scale ? image.scale(scale) : image
+    def convert(width, height, blob)
+      if @mode == 'bin'
+        to_bin_format(width, height, blob)
+      else
+        to_text_format(width, height, blob)
+      end
     end
 
-    def as_cvt(mode)
-      case mode
-      when :rgb, 'rgb'
-        ->(px) { px.to_color(Magick::AllCompliance, false, 8, true)[1, 6] }
-      when :rgba, 'rgba'
-        ->(px) { px.to_color(Magick::AllCompliance, true, 8, true)[1, 8] }
-      else
-        lambda do |px|
-          px.to_color(Magick::AllCompliance, false, 8, true)[
-            1,
-            px.alpha >= 65_535 ? 6 : 8
-          ]
+    def to_text_format(width, height, blob)
+      ret = []
+      pos = -1
+      height.times do |y|
+        width.times do |x|
+          next if (a = blob.getbyte(pos += 4)) == 0
+          ret << format(
+            (
+              if a == 255
+                "PX %d %d %02x%02x%02x\n"
+              else
+                "PX %d %d %02x%02x%02x%02x\n"
+              end
+            ),
+            x + @delta_x,
+            y + @delta_y,
+            blob.getbyte(pos - 3),
+            blob.getbyte(pos - 2),
+            blob.getbyte(pos - 1),
+            a
+          )
         end
       end
+      ret
+    end
+
+    def to_bin_format(width, height, blob)
+      ret = []
+      pos = 0
+      height.times do |y|
+        width.times do |x|
+          if blob[pos + 3] != "\x0"
+            ret << "PB#{[x + @delta_x, y + @delta_y].pack('v2')}#{blob[pos, 4]}"
+          end
+          pos += 4
+        end
+      end
+      ret
     end
   end
+
+  @count = ENV['TC'].to_i
+  @count = 4 unless @count.positive?
+  @mode = 'text'
+  @delta_x = @delta_y = 0
 end

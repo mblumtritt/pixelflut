@@ -12,8 +12,8 @@ This gem is an open experiment. You are welcome to fork or create pull requests 
 
 Use [Bundler](http://gembundler.com/) to install the gem:
 
-```bash
-$ gem install pixelflut
+```sh
+gem install pixelflut
 ```
 
 Now the `pxf` command offers the complete functionality.
@@ -22,17 +22,19 @@ Now the `pxf` command offers the complete functionality.
 
 You'll find some help on the command line:
 
-```bash
+```
 $ pxf
-Usage: pxf [OPTIONS] IMAGE
+Usage: pxf [options] <image>
 
 Options:
-    --host ADDRESS        target host address
--p, --port PORT           target port (default 1234)
--c, --connections CONN    count of connections (default 4)
--x, --transpose-x X       transpose image X pixels
--y, --transpose-y Y       transpose image Y pixels
--s, --scale SCALE         scale image by SCALE factor
--m, --pixel MODE          select pixel coding (RGBX | RGBA | RGB)
--h, --help                print this help
+      --host <address>       target host address (default 127.0.0.1)
+  -p, --port <port>          target port (default 1337)
+  -c, --connections <count>  count of connections (default 4)
+  -x, --transpose-x <x>      transpose image <x> pixels
+  -y, --transpose-y <y>      transpose image <y> pixels
+  -m, --mode <mode>          select pixel encoding (TEXT | BIN)
+  -t, --threads              use threads instead of processes
+  -h, --help                 print this help
+  -v, --version              print version information
+
 ```
