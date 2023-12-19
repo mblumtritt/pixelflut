@@ -33,7 +33,7 @@ def die!(msg, code: 1)
   exit(code)
 end
 
-die!('argument missing') if ARGV.empty?
+die!("argument missing - try `#{$name} --help`") if ARGV.empty?
 
 require_relative('../lib/pixelflut')
 
