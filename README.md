@@ -10,7 +10,7 @@ This gem is an open experiment. You are welcome to fork or create pull requests 
 
 ### Installation
 
-Use [Bundler](http://gembundler.com/) to install the gem:
+Use the Ruby package manager to install the gem:
 
 ```sh
 gem install pixelflut
