@@ -23,5 +23,5 @@ Gem::Specification.new do |spec|
 
   spec.executables = %w[pxf]
   spec.files = Dir['lib/**/*']
-  spec.extra_rdoc_files = %w[README.md]
+  spec.extra_rdoc_files = %w[README.md LICENSE]
 end
