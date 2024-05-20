@@ -2,6 +2,9 @@
 
 A Pixelflut client written in Ruby.
 
+- Gem: [rubygems.org](https://rubygems.org/gems/pixelflut)
+- Source: [github.com](https://github.com/mblumtritt/pixelflut)
+
 ## Description
 
 Based on the idea of a simple server protocol to collaborate on a shared canvas named [Pixelflut](https://cccgoe.de/wiki/Pixelflut) this gem implements a Ruby version of a client.
@@ -36,5 +39,4 @@ Options:
   -t, --threads              use threads instead of processes
   -h, --help                 print this help
   -v, --version              print version information
-
 ```
